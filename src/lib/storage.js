@@ -3,6 +3,8 @@ const PREFIX = 'etd'
 export const KEYS = {
   transactions: `${PREFIX}.transactions.v1`,
   prefs: `${PREFIX}.prefs.v1`,
+  users: `${PREFIX}.users.v1`,
+  currentUser: `${PREFIX}.currentUser.v1`,
 }
 
 export function readJSON(key, fallback) {

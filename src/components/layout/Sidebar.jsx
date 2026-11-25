@@ -1,9 +1,18 @@
-import { NavLink } from 'react-router-dom'
-import { X } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { LogOut, X } from 'lucide-react'
 import { NAV_ITEMS } from '../../lib/navigation'
 import { IconButton } from '../ui/Button'
+import { useAuth } from '../../context/AuthContext'
 
 export function SidebarContent({ onNavigate }) {
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-2 px-5 py-5">
@@ -48,7 +57,18 @@ export function SidebarContent({ onNavigate }) {
         ))}
       </nav>
 
-      <div className="m-3 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-4 text-white shadow-sm">
+      <div className="border-t border-slate-100 p-3 dark:border-slate-800">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Sign out</span>
+        </button>
+      </div>
+
+      <div className="m-3 mt-0 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-4 text-white shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-wide text-blue-100">Tip</p>
         <p className="mt-1 text-sm leading-snug text-blue-50">
           Keep your categories tidy — reports and charts group spending automatically.

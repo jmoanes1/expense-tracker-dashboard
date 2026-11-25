@@ -3,6 +3,7 @@ import { Bell, ChevronDown, LogOut, Menu, Moon, Settings, Sun } from 'lucide-rea
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useCurrencyFormatter, usePrefs } from '../../context/PrefsContext'
 import { useTransactions } from '../../context/TransactionsContext'
+import { useAuth } from '../../context/AuthContext'
 import { formatDate, formatLongDate, today } from '../../lib/format'
 import { navForPath } from '../../lib/navigation'
 import { buildNotifications, unreadCount } from '../../lib/notifications'
@@ -98,16 +99,26 @@ function NotificationBell() {
 function ProfileMenu() {
   const [open, setOpen] = useState(false)
   const { prefs, isDark, toggleTheme } = usePrefs()
+  const { currentUser, logout } = useAuth()
   const navigate = useNavigate()
   const ref = useClickOutside(() => setOpen(false))
 
-  const initials = prefs.userName
+  const displayName = currentUser?.name || prefs.userName
+  const displayEmail = currentUser?.email || prefs.userEmail
+
+  const initials = displayName
     .split(' ')
     .map((part) => part[0])
     .filter(Boolean)
     .slice(0, 2)
     .join('')
     .toUpperCase()
+
+  const handleLogout = () => {
+    setOpen(false)
+    logout()
+    navigate('/login')
+  }
 
   return (
     <div className="relative" ref={ref}>
@@ -122,7 +133,7 @@ function ProfileMenu() {
         </span>
         <span className="hidden text-left md:block">
           <span className="block text-sm font-semibold leading-tight text-slate-900 dark:text-slate-100">
-            {prefs.userName}
+            {displayName}
           </span>
           <span className="block text-[11px] leading-tight text-slate-400 dark:text-slate-500">Personal account</span>
         </span>
@@ -132,8 +143,8 @@ function ProfileMenu() {
       {open ? (
         <div className="absolute right-0 z-40 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
           <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{prefs.userName}</p>
-            <p className="truncate text-xs text-slate-500 dark:text-slate-400">{prefs.userEmail}</p>
+            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{displayName}</p>
+            <p className="truncate text-xs text-slate-500 dark:text-slate-400">{displayEmail}</p>
           </div>
           <div className="p-1.5">
             <button
@@ -157,8 +168,8 @@ function ProfileMenu() {
             </button>
             <button
               type="button"
-              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+              onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" aria-hidden />
               Sign out

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DatabaseBackup, Download, Moon, Sun, Trash2, UserRound } from 'lucide-react'
 import { useCurrencyFormatter, usePrefs } from '../context/PrefsContext'
 import { useTransactions } from '../context/TransactionsContext'
+import { useAuth } from '../context/AuthContext'
 import { Button } from '../components/ui/Button'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
 import { Field, Input, Select, Toggle } from '../components/ui/Field'
@@ -19,14 +20,33 @@ const CURRENCIES = [
 
 export function SettingsPage() {
   const { prefs, setPref, isDark, toggleTheme, resetPrefs } = usePrefs()
+  const { currentUser, updateProfile } = useAuth()
   const { sorted, loadSampleData, clearAll } = useTransactions()
   const money = useCurrencyFormatter()
   const [confirm, setConfirm] = useState(null)
-  const [profile, setProfile] = useState({ userName: prefs.userName, userEmail: prefs.userEmail })
+  const [profileMsg, setProfileMsg] = useState({ text: '', type: '' })
+  const [profile, setProfile] = useState({
+    userName: currentUser?.name || prefs.userName,
+    userEmail: currentUser?.email || prefs.userEmail,
+  })
 
-  const updateProfile = (key) => (e) => {
-    setProfile((prev) => ({ ...prev, [key]: e.target.value }))
-    setPref(key, e.target.value)
+  useEffect(() => {
+    if (currentUser) {
+      setProfile({ userName: currentUser.name, userEmail: currentUser.email })
+    }
+  }, [currentUser])
+
+  const handleProfileSubmit = (e) => {
+    e.preventDefault()
+    setProfileMsg({ text: '', type: '' })
+    try {
+      updateProfile(profile.userName, profile.userEmail)
+      setPref('userName', profile.userName)
+      setPref('userEmail', profile.userEmail)
+      setProfileMsg({ text: 'Profile updated successfully!', type: 'success' })
+    } catch (err) {
+      setProfileMsg({ text: err.message || 'Failed to update profile', type: 'error' })
+    }
   }
 
   const exportData = () => {
@@ -48,22 +68,53 @@ export function SettingsPage() {
         <CardBody className="space-y-5">
           <div className="flex items-center gap-4">
             <span className="grid h-14 w-14 place-items-center rounded-2xl bg-blue-600 text-lg font-bold text-white">
-              {prefs.userName.split(' ').map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'U'}
+              {profile.userName.split(' ').map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'U'}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{prefs.userName}</p>
+              <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{profile.userName}</p>
               <p className="flex items-center gap-1.5 truncate text-xs text-slate-500 dark:text-slate-400">
                 <UserRound className="h-3.5 w-3.5" aria-hidden />
                 Personal account · local data only
               </p>
             </div>
           </div>
-          <Field label="Full name">
-            <Input value={profile.userName} onChange={updateProfile('userName')} placeholder="Your name" />
-          </Field>
-          <Field label="Email">
-            <Input type="email" value={profile.userEmail} onChange={updateProfile('userEmail')} placeholder="you@example.com" />
-          </Field>
+
+          {profileMsg.text && (
+            <div
+              className={`rounded-xl p-3 text-xs font-medium ${
+                profileMsg.type === 'success'
+                  ? 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300'
+                  : 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300'
+              }`}
+            >
+              {profileMsg.text}
+            </div>
+          )}
+
+          <form onSubmit={handleProfileSubmit} className="space-y-4">
+            <Field label="Full name">
+              <Input
+                value={profile.userName}
+                onChange={(e) => setProfile((p) => ({ ...p, userName: e.target.value }))}
+                placeholder="Your name"
+                required
+              />
+            </Field>
+            <Field label="Email">
+              <Input
+                type="email"
+                value={profile.userEmail}
+                onChange={(e) => setProfile((p) => ({ ...p, userEmail: e.target.value }))}
+                placeholder="you@example.com"
+                required
+              />
+            </Field>
+            <div className="pt-1">
+              <Button type="submit" variant="primary" size="sm">
+                Save profile
+              </Button>
+            </div>
+          </form>
         </CardBody>
       </Card>
 
